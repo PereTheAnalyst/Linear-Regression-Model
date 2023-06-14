@@ -159,7 +159,7 @@ plt.show()
 ##Let's predict the price of a house with 1200 sqft. Since the units of  𝑥 are in 1000's of sqft,  𝑥 is 1.2.
 w = w_final                         
 b = b_final    
-x_i = 1
+x_i = 1.2
 cost_of_sqft = w * x_i + b    
 
 print(f"${cost_of_sqft:.0f} thousand dollars")

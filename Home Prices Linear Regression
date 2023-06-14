@@ -154,6 +154,7 @@ plt.plot(px_train, tmp_f_wb, c='b', label="Our prediction")
 plt.scatter(px_train, py_train, marker='x', c='r', label="Actual Values")
 plt.legend()
 plt.show()
+
 ##now you can input your own variables or sqft predictions into the linear regression expression
 ##Let's predict the price of a house with 1200 sqft. Since the units of  𝑥 are in 1000's of sqft,  𝑥 is 1.2.
 w = w_final                         

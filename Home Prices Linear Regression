@@ -1,165 +1,130 @@
 import math
 import numpy as np
 import matplotlib.pyplot as plt
-from lab_utils_uni import plt_house_x, plt_contour_wgrad, plt_divergence, plt_gradients
 
-# Step 1: Define the target values and training data
-x_train = np.array([1.0, 2.0])   #featured Data
-y_train = np.array([300.0, 500.0])
-px_train = np.array([1.01, 2.02, 3.03, 4.04, 0.99, 1.98, 3.09, 4.02, 1.05, 2.1, 3.08, 4.06])
-py_train = np.array([302.0, 499.5, 703.5, 821.5, 298.0, 503.0, 694.0, 830.0, 297.5, 497.0, 700.0, 819.0])
+def predict_home_value():
+    # Step 1: Define the target values and training data
+    x_train = np.array([1.0, 2.0])   #featured Data
+    y_train = np.array([300.0, 500.0])
+    px_train = np.array([1.01, 2.02, 3.03, 4.04, 0.99, 1.98, 3.09, 4.02, 1.05, 2.1, 3.08, 4.06])
+    py_train = np.array([302.0, 499.5, 703.5, 821.5, 298.0, 503.0, 694.0, 830.0, 297.5, 497.0, 700.0, 819.0])
 
-# Step 2: Compute the cost function
-def compute_costs(x, y, w, b):
-    m = len(x)  # Number of data points
-    cost = np.sum((w * x + b - y) ** 2)
-    total_cost = 1 / (2 * m) * cost
-    return total_cost
+    # Step 2: Compute the cost function
+    def compute_costs(x, y, w, b):
+        m = len(x)  # Number of data points
+        cost = np.sum((w * x + b - y) ** 2)
+        total_cost = 1 / (2 * m) * cost
+        return total_cost
 
-# Test the compute_costs function
-x = px_train
-y = py_train
-w = 200
-b = 100
-results = compute_costs(x, y, w, b)
-print("Total Cost:", results)
+    # Step 3: Compute the gradients for gradient descent
+    def compute_gradients(x, y, w, b):
+        m = len(x)  # Number of data points
+        dj_dw = np.sum((w * x + b - y) * x)
+        dj_db = np.sum(w * x + b - y)
+        dj_dw /= m
+        dj_db /= m
+        return dj_dw, dj_db
 
-# Step 3: Compute the gradients for gradient descent
-def compute_gradients(x, y, w, b):
-    m = len(x)  # Number of data points
-    dj_dw = np.sum((w * x + b - y) * x)
-    dj_db = np.sum(w * x + b - y)
-    dj_dw /= m
-    dj_db /= m
-    return dj_dw, dj_db
+    # Step 4: Perform gradient descent
+    def gradient_descent(x, y, w_init, b_init, alpha, num_iters, cost_function, gradient_function):
+        j_history = []
+        p_history = []
+        b = b_init
+        w = w_init
 
-# Test the compute_gradients function
-x = px_train
-y = py_train
-w = 200
-b = 100
-results = compute_gradients(x, y, w, b)
-print("Gradients:", results)
+        for i in range(num_iters):
+            dj_dw, dj_db = gradient_function(x, y, w, b)
+            b -= alpha * dj_db
+            w -= alpha * dj_dw
 
-# Step 4: Perform gradient descent
-def gradient_descent(x, y, w_init, b_init, alpha, num_iters, cost_function, gradient_function):
-    j_history = []
-    p_history = []
-    b = b_init
-    w = w_init
+            if i < 100000:
+                j_history.append(cost_function(x, y, w, b))
+                p_history.append([w, b])
 
-    for i in range(num_iters):
-        dj_dw, dj_db = gradient_function(x, y, w, b)
-        b -= alpha * dj_db
-        w -= alpha * dj_dw
+            if i % math.ceil(num_iters / 10) == 0:
+                print(f"Iteration {i:4}: Cost {j_history[-1]:0.2e}, dj_dw: {dj_dw:0.3e}, dj_db: {dj_db:0.3e}, "
+                      f"w: {w:0.3e}, b: {b:0.5e}")
 
-        if i < 100000:
-            j_history.append(cost_function(x, y, w, b))
-            p_history.append([w, b])
+        return w, b, j_history, p_history
 
-        if i % math.ceil(num_iters / 10) == 0:
-            print(f"Iteration {i:4}: Cost {j_history[-1]:0.2e}, dj_dw: {dj_dw:0.3e}, dj_db: {dj_db:0.3e}, "
-                  f"w: {w:0.3e}, b: {b:0.5e}")
+    # Step 5: Make predictions
+    def predict(w, b, x):
+        return w * x + b
 
-    return w, b, j_history, p_history
+    # Perform gradient descent
+    w_init = 0
+    b_init = 0
+    iterations = 10000
+    learning_rate = 1.0e-2
 
-# Initialize parameters
-w_init = 0
-b_init = 0
+    w_final, b_final, j_hist, p_hists = gradient_descent(px_train, py_train, w_init, b_init, learning_rate,
+                                                         iterations, compute_costs, compute_gradients)
 
-# Set gradient descent settings
-iterations = 10000
-learning_rate = 1.0e-2
+    # Step 6: Plot the contour plot and gradient descent path
+    def plot_divergence(p_hists, j_hist):
+        num_iters = len(p_hists)
+        iterations = np.arange(num_iters)
 
-# Perform gradient descent
-w_final, b_final, j_hist, p_hists = gradient_descent(px_train, py_train, w_init, b_init, learning_rate,
-                                                     iterations, compute_costs, compute_gradients)
-print(f"(w, b) found by gradient descent: ({w_final:8.4f}, {b_final:8.4f})")
+        fig, ax1 = plt.subplots(figsize=(10, 6))
 
-# Step 5: Make predictions
-def predict(w, b, x):
-    return w * x + b
+        ax1.plot(iterations, j_hist, color='blue')
+        ax1.set_xlabel('Iteration')
+        ax1.set_ylabel('Cost', color='blue')
+        ax1.tick_params(axis='y', labelcolor='blue')
 
-house_sizes = [1000, 1200, 2000]
-for size in house_sizes:
-    prediction = predict(w_final, b_final, size / 1000)
-    print(f"{size} sqft house prediction: {prediction:.1f} Thousand dollars")
+        ax2 = ax1.twinx()
+        ax2.plot(iterations, p_hists[:, 0], color='red', label='w')
+        ax2.plot(iterations, p_hists[:, 1], color='green', label='b')
+        ax2.set_ylabel('Parameters', color='red')
+        ax2.tick_params(axis='y', labelcolor='red')
 
-# Step 6: Plot the contour plot and gradient descent path
-fig, ax = plt.subplots(1, 1, figsize=(12, 6))
-plt_contour_wgrad(px_train, py_train, p_hists, ax)
+        fig.tight_layout()
+        plt.title('Divergence of Gradient Descent Path')
+        plt.legend()
+        plt.show()
 
+    # Step 9: Plot predictions with small learning rate
+    def compute_model_output(x, w, b):
+        f_wb = w * x + b
+        return f_wb
 
-# Step 7: Perform gradient descent with a larger learning rate
-w_init = 0
-b_init = 0
-iterations = 10
-learning_rate = 8.0e-1
-w_finals, b_finals, j_hist, p_hists = gradient_descent(px_train, py_train, w_init, b_init, learning_rate,
-                                                     iterations, compute_costs, compute_gradients)
-print(f"(w, b) found by gradient descent: ({w_final:8.4f}, {b_final:8.4f})")
+    # Step 10: Make predictions
+    def make_predictions(w, b, sizes):
+        predictions = []
+        for size in sizes:
+            prediction = predict(w, b, size)
+            predictions.append(prediction)
+        return predictions
 
-# Step 8: Plot the divergence of gradient descent path
-plt_divergence(p_hists, j_hist, px_train, py_train)
-plt.show()
+    # Step 11: Application logic
+    # Step 8: Plot the divergence of gradient descent path
+    p_hists = np.array(p_hists)
+    plot_divergence(p_hists, j_hist)
 
-# Step 9: Compute the cost for specific values of w and b
-x = px_train
-y = py_train
-w = w_final
-b = b_final
-results = compute_costs(x, y, w, b)
-print("Total Cost:", results)
+    # Step 7: Compute the cost for specific values of w and b
+    x = px_train
+    y = py_train
+    w = w_final
+    b = b_final
+    results = compute_costs(x, y, w, b)
+    print("Total Cost:", results)
 
-# Step 10: Plot the data points
-plt.scatter(px_train, py_train, marker='x', c='r')
-plt.title("Housing Prices")
-plt.ylabel('Price (in 1000s of dollars)')
-plt.xlabel('Size (1000 sqft)')
-plt.show()
+    # Step 9: Plot the data points
+    plt.scatter(px_train, py_train, marker='x', c='r')
+    plt.title("Housing Prices")
+    plt.ylabel('Price (in 1000s of dollars)')
+    plt.xlabel('Size (1000 sqft)')
+    plt.show()
 
-# Step 11: Plot predictions with small learning rate
-w = w_final
-b = b_final
-m = len(px_train)
+    # Step 10: Make predictions
+    sizes = [1000, 1200, 2000]
+    predictions = make_predictions(w_final, b_final, sizes)
+    for size, prediction in zip(sizes, predictions):
+        print(f"{size} sqft house prediction: {prediction:.1f} Thousand dollars")
 
-def compute_model_output(x, w, b):
-    f_wb = np.zeros(m)
-    for i in range(m):
-        f_wb[i] = w * x[i] + b
-        
-    return f_wb
+    # Step 12: User input and prediction
+    user_input = float(input("Enter the size of your home in square feet: "))
+    user_prediction = predict(w_final, b_final, user_input)
+    print(f"Your {user_input} sqft home prediction: {user_prediction:.1f} Thousand dollars")
 
-tmp_f_wb = compute_model_output(px_train, w, b)
-plt.title('Linear Regression Model with low learning Rate')
-plt.plot(px_train, tmp_f_wb, c='b', label="Our prediction")
-plt.scatter(px_train, py_train, marker='x', c='r', label="Actual Values")
-plt.legend()
-plt.show()
-
-# Step 12: Plot predictions with large learning rate
-w = w_finals
-b = b_finals
-
-def compute_model_output(x, w, b):
-    f_wb = np.zeros(len(x))
-    for i in range(len(x)):
-        f_wb[i] = w * x[i] + b
-
-    return f_wb
-
-tmp_f_wb = compute_model_output(px_train, w, b)
-plt.title('Linear Regression Model with high learning Rate')
-plt.plot(px_train, tmp_f_wb, c='b', label="Our prediction")
-plt.scatter(px_train, py_train, marker='x', c='r', label="Actual Values")
-plt.legend()
-plt.show()
-
-##now you can input your own variables or sqft predictions into the linear regression expression
-##Let's predict the price of a house with 1200 sqft. Since the units of  𝑥 are in 1000's of sqft,  𝑥 is 1.2.
-w = w_final                         
-b = b_final    
-x_i = 1.2
-cost_of_sqft = w * x_i + b    
-
-print(f"${cost_of_sqft:.0f} thousand dollars")
+predict_home_value()
